@@ -1,14 +1,11 @@
-// src/context/authContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { AxiosError } from 'axios';
 import api from '../services/api';
 
 interface AuthContextProps {
   user: string | null;
-  login: (email: string, password: string) => Promise<{ status: number; }>;
+  login: (email: string, password: string) => Promise<{ status: number, message?: string }>;
   logout: () => void;
 }
 
@@ -30,18 +27,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('user', JSON.stringify(user));
 
         setUser(user);
-      } else {
-        toast.error(response.data.message || 'Erro ao fazer login.');
       }
 
-      return { status: response.status };
-    } catch (error) {
-      if (error instanceof AxiosError && error.response && error.response.status === 401) {
-        toast.error('Credenciais inválidas.');
-      } else {
-        toast.error('Erro ao fazer login. Tente novamente mais tarde.');
+      return { status: response.status, message: response.data.message };
+    } catch (error: unknown) {
+      let message = 'Erro ao fazer login. Tente novamente mais tarde.';
+      if (error instanceof AxiosError && error.response) {
+        if (error.response.status === 401) {
+          message = 'Credenciais inválidas.';
+        }
+        return { status: error.response.status, message };
       }
-      throw error;
+      return { status: 500, message };
     }
   }, []);
 
@@ -50,14 +47,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setUser(null);
-    toast.success('Logout realizado com sucesso.');
     navigate('/login');
   }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       {children}
-      <ToastContainer />
     </AuthContext.Provider>
   );
 };

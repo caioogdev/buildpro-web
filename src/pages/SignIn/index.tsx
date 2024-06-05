@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,11 +11,11 @@ import homeOne from '../../assets/homeOne.svg';
 import homeTwo from '../../assets/homeTwo.svg';
 import homeThree from '../../assets/homeThree.svg';
 import { CgMail } from "react-icons/cg";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import { handleAxiosError } from "@/hooks/services/handleAxiosError";
 import { useAuth } from "@/hooks/auth";
+import { toast } from 'sonner';
+import { Toaster } from "@/components/ui/sonner"; // Importando o Toaster configurado para usar Sonner
 
 const SignIn: React.FC = () => {
     const [currentItem, setCurrentItem] = useState(0);
@@ -48,16 +48,26 @@ const SignIn: React.FC = () => {
     const handleSubmit: SubmitHandler<any> = async (data) => {
         try {
             loginSchema.parse(data);
-            const response = await login(data.email, data.password)
-            
+            const response = await login(data.email, data.password);
+
+            const now = new Date();
+            const formattedDate = `${now.toLocaleDateString()} às ${now.toLocaleTimeString()}`;
+
             if (response.status === 200) {
-                toast.success("Login efetuado com sucesso!");
+                toast.success('Login efetuado com sucesso!', {
+                    description: `Data: ${formattedDate}`
+                });
                 navigate('/');
             } else {
-                toast.error("Credenciais inválidas.");
+                toast.error('Credenciais inválidas.', {
+                    description: `Data: ${formattedDate}`
+                });
             }
         } catch (error) {
-            handleAxiosError(error)
+            toast.error('Erro ao fazer login. Tente novamente mais tarde.', {
+                description: new Date().toLocaleString()
+            });
+            handleAxiosError(error);
         }
     };
 
@@ -130,7 +140,7 @@ const SignIn: React.FC = () => {
                     </CardContent>
                 </Card>
             </section>
-            <ToastContainer />
+            <Toaster />
         </main>
     );
 }
